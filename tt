@@ -1,0 +1,197 @@
+import java.util.*;
+
+
+class Graph {
+    // bieu dien do thi co huong theo dang not OOp
+    public static void main(String[] args) {
+
+        danhsachke adjecList = new danhsachke(8);
+        adjecList.addEdge(0, 1,4);
+        adjecList.addEdge(0,2,3);
+        adjecList.addEdge(1, 3, 2);
+        adjecList.addEdge(1,4,3);
+        adjecList.addEdge(2,4,2);
+        adjecList.addEdge(2,5,5);
+        adjecList.addEdge(3, 7,7);
+        adjecList.addEdge(3,4,1);
+        adjecList.addEdge(4,5,1);
+        adjecList.addEdge(4,7,8);
+        adjecList.addEdge(4, 6,3);
+        adjecList.addEdge(5,6,1);
+        adjecList.addEdge(6,7,3);
+
+        System.out.println("\nDuong di ngan nhat trong do thi  theo trong so canh co huong la "+ adjecList.findShortPathWithWeight(0,7)+
+                "\nvoi tong gia tri la " + adjecList.minold);
+
+    }
+}
+public class danhsachke {
+    private Map<Integer, Map<Integer, Integer>> adjacencyList ;// danh sach cac dinh ke
+    private int numOfNodes;// dinh ke
+    public int minold;
+
+    public danhsachke(int numOfNodes){
+        this.numOfNodes = numOfNodes;
+        adjacencyList= new HashMap<>();
+        for(int i =0; i< numOfNodes;i++){// them cac dinh chay tu dinh 0
+            this.adjacencyList.put(i, new HashMap<>());
+        }
+    }
+    public void addEdge(int node1, int node2, int value) {
+        adjacencyList.get(node1).put(node2, value);
+        adjacencyList.get(node2).put(node1, value);
+    }
+
+    public String findShortPathWithWeight(int start, int end ){
+        String path = "";
+        boolean chonMinValue[] = new boolean[1000];
+        boolean visitValue[] = new boolean[1000];
+        Map<Integer, Map<Integer, Integer>> chuaxet = new HashMap<>();
+        Map<Integer, Map<Integer, Integer>> chonParent = new HashMap<>();
+        LinkedList<Integer> dinhlist = new LinkedList<>();
+
+        dinhlist.add(start);
+        chonMinValue[start] = true;
+        visitValue[start]  =true;
+        minold =0;
+
+        while (dinhlist.size() != 0){
+            int dinh = dinhlist.poll();
+            Set<Integer> setkes = adjacencyList.get(dinh).keySet();
+            Iterator<Integer> iterator = setkes.iterator();
+            compareDinhs minvalue = new compareDinhs();
+            int i =0;
+            while (iterator.hasNext()){
+                
+                if(!chuaxet.isEmpty() && i==0){// chi xet 1 lan duy nhat
+                    Iterator<Integer> iteratorrr = chuaxet.keySet().iterator();
+                    while(iteratorrr.hasNext()) {
+                        int value = iteratorrr.next();
+                        // Thực hiện thao tác với value ở đây
+                        Iterator<Integer> tempp4 = chuaxet.get(value).keySet().iterator();
+                        while (tempp4.hasNext()){
+                            int a = tempp4.next();
+                            minvalue.putElements(value, a);
+                        }
+                    }
+                }
+                
+                    int node = iterator.next();
+                    if(!chonMinValue[node]){
+                        if(dinh==0){
+                            chuaxet.put(0+ adjacencyList.get(dinh).get(node), Map.of(dinh, node));
+                            minvalue.putElements(0+ adjacencyList.get(dinh).get(node), dinh);
+                            chuaxet.put(0+ adjacencyList.get(dinh).get(node), Map.of(dinh,node));
+                            minvalue.putElements(0+ adjacencyList.get(dinh).get(node), dinh);
+                        }else{
+                            if(visitValue[node]){
+                                int oldVisitValue =0;
+                                int oldlabel =0;
+                                Iterator<Integer> timCHuaXet = chuaxet.keySet().iterator();
+                                boolean flag = false;
+                                while(timCHuaXet.hasNext()){
+                                    oldVisitValue = timCHuaXet.next();
+                                    Map<Integer, Integer> maTam = chuaxet.get(oldVisitValue);
+                                    Iterator<Integer> maTam2 = maTam.keySet().iterator();
+                                    while (maTam2.hasNext()){
+                                        oldlabel = maTam2.next();
+                                        if(maTam.get(oldlabel) == node){
+                                            flag = true;
+                                            break;
+                                        }
+                                    }
+                                    if (flag){
+                                        break;
+                                    }
+                                }
+                                if(oldVisitValue > minold + adjacencyList.get(dinh).get(node)){
+                                    chuaxet.put(minold + adjacencyList.get(dinh).get(node), Map.of(dinh,node));//3-a-b    10-c-e
+                                    minvalue.putElements(minold + adjacencyList.get(dinh).get(node), dinh);
+                                    chuaxet.remove(oldVisitValue);
+                                }else {
+                                    minvalue.putElements(oldVisitValue, oldlabel);
+                                }
+                            }else {
+                                chuaxet.put(minold + adjacencyList.get(dinh).get(node), Map.of(dinh, node));//3-a-b    10-c-e
+                                minvalue.putElements(minold + adjacencyList.get(dinh).get(node), dinh);
+                            }
+                        }
+                        visitValue[node] = true;
+                    }
+                    i++;
+            }
+
+            int minGiatri = minvalue.compeElements();
+            minold=minGiatri;
+            if(minGiatri == 0 && chuaxet.isEmpty()){
+                break;
+            }
+            chonParent.put(minGiatri, chuaxet.get(minGiatri));
+            Iterator<Integer> temp = chuaxet.get(minGiatri).values().iterator();
+            while (temp.hasNext()){
+                int a =temp.next();
+                chonMinValue[a]  =true;
+                dinhlist.add(a);
+            }
+            chuaxet.remove(minGiatri);
+        }
+        // chonParent
+        List<String> paths  =new ArrayList<>();
+        paths.add(end+" -> ");
+        Iterator<Integer> KeyValue = chonParent.keySet().iterator();
+        while (KeyValue.hasNext()){
+            minold = KeyValue.next();
+        }
+        Iterator<Map<Integer, Integer>> duongDiDinhs = chonParent.values().iterator();
+        List<Map<Integer, Integer>> tempList = new ArrayList<>();
+        while (duongDiDinhs.hasNext()) {
+            tempList.add(duongDiDinhs.next());
+        }
+        ListIterator<Map<Integer, Integer>> reverseIterator = tempList.listIterator(tempList.size());
+
+        while (reverseIterator.hasPrevious()){
+            Map<Integer, Integer> duongdiDinh = reverseIterator.previous();
+            Iterator<Integer> mapcon = duongdiDinh.keySet().iterator();
+            while (mapcon.hasNext()){
+                int dinhChange = mapcon.next();
+                if(duongdiDinh.get(dinhChange) == end){
+                    end = dinhChange;
+                    paths.add( end + " -> ");
+                }
+            }
+        }
+      //7-6-5-4-2-0
+        for (int i = paths.size() - 1; i >= 0; i--) {
+            path+= paths.get(i);
+        }
+        path =  path.substring(0, path.length() - 4);
+        return path ;
+    }
+}
+class compareDinhs{
+    public Map<Integer, Integer> Giatricacdinhkes = new HashMap<>();
+    public compareDinhs(){
+    }
+    public void putElements(int value, int label){
+        this.Giatricacdinhkes.put(value, label);
+    }
+    public Integer compeElements(){
+        if(Giatricacdinhkes.size() !=0) {
+            int minV = 0;
+            int i = 0;
+            for (Integer vl : Giatricacdinhkes.keySet()) {
+                if (i == 0) {
+                    minV = vl;
+                } else {
+                    if (minV > vl) {
+                        minV = vl;
+                    }
+                }
+                i++;
+            }
+            return minV;// gia lai gia dinh se duoc chon
+        }else {
+            return  0;
+        }
+    }
+}
